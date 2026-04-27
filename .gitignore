@@ -1,0 +1,11 @@
+﻿.vendor/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+outputs/fulltext/
+outputs/**/*.html
+outputs/**/*.pdf
+outputs/**/*.tmp
