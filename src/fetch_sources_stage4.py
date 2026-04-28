@@ -75,6 +75,11 @@ MANIFEST_COLUMNS = [
     "has_text_content",
     "usable_for_extraction",
     "fetch_notes",
+    "source_quality_type",
+    "source_quality_score",
+    "allowed_extraction_scope",
+    "extraction_strategy",
+    "recommended_next_action",
 ]
 
 

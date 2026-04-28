@@ -5,6 +5,7 @@ __pycache__/
 *.pyo
 .env
 
+outputs/
 outputs/fulltext/
 outputs/**/*.html
 outputs/**/*.pdf

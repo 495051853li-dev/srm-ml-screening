@@ -1,0 +1,2 @@
+pdf_file,matched_paper_id,matched_by,doi,title,parse_status,text_length,source_quality_type,ready_for_extraction,manifest_updated,notes,ingest_time
+data\raw\pdfs\paper_0220.pdf,paper_0220,paper_id,10.1021/acscatal.3c05847,"Structural Changes of Ni and Ni–Pt Methane Steam Reforming Catalysts During Activation, Reaction, and Deactivation Under Dynamic Reaction Conditions",parsed,54482,pdf_fulltext,yes,yes,Local PDF classified from extracted text; no experimental values generated.,2026-04-28T20:46:08+08:00

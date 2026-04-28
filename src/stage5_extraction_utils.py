@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import re
+import sys
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -9,6 +10,14 @@ from bs4 import BeautifulSoup
 
 
 ROOT = Path(__file__).resolve().parent.parent
+VENDOR = ROOT / ".vendor"
+if VENDOR.exists():
+    sys.path.insert(0, str(VENDOR))
+
+try:
+    from pypdf import PdfReader  # type: ignore
+except Exception:  # pragma: no cover
+    PdfReader = None  # type: ignore
 
 REDIRECT_TERMS = [
     "redirecting",
@@ -110,6 +119,17 @@ def yes_no(flag: bool) -> str:
 def load_text_from_local_path(path: Path) -> str:
     if not path.exists():
         return ""
+    if path.suffix.lower() == ".pdf":
+        if PdfReader is None:
+            return ""
+        try:
+            reader = PdfReader(str(path))
+            pages = []
+            for page in reader.pages[:12]:
+                pages.append(page.extract_text() or "")
+            return normalize_text(" ".join(pages))
+        except Exception:
+            return ""
     text = path.read_text(encoding="utf-8", errors="ignore")
     if path.suffix.lower() in {".html", ".htm"}:
         soup = BeautifulSoup(text, "html.parser")
