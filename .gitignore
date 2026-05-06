@@ -10,3 +10,6 @@ outputs/fulltext/
 outputs/**/*.html
 outputs/**/*.pdf
 outputs/**/*.tmp
+
+data/raw/pdfs/*.pdf
+data/raw/pdfs/*.PDF

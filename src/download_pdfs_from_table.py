@@ -83,6 +83,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--overwrite", action="store_true", help="Overwrite an existing local PDF for the same paper_id.")
     parser.add_argument("--ingest-after-download", action="store_true", help="Run ingest_local_pdfs.py after downloading.")
     parser.add_argument("--max-mb", type=float, default=80.0, help="Safety limit for a single PDF response.")
+    parser.add_argument("--cookies", default="", help="Optional Netscape cookie.txt file exported from a browser session.")
+    parser.add_argument("--cookie-header", default="", help="Optional raw Cookie header string for publisher access.")
+    parser.add_argument("--no-live-metadata", action="store_true", help="Disable live OpenAlex/Crossref DOI metadata lookups.")
     return parser.parse_args()
 
 
@@ -93,12 +96,34 @@ def read_rows(path: Path) -> List[Dict[str, str]]:
         return list(csv.DictReader(handle))
 
 
+def resolve_repo_path(value: str | Path) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else ROOT / path
+
+
 def write_rows(path: Path, rows: Sequence[Dict[str, str]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=LOG_COLUMNS, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+
+
+def load_netscape_cookies(session: requests.Session, cookie_path: Path) -> int:
+    if not cookie_path.exists():
+        raise FileNotFoundError(f"Cookie file not found: {cookie_path}")
+    loaded = 0
+    for raw_line in cookie_path.read_text(encoding="utf-8", errors="ignore").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split("\t")
+        if len(parts) != 7:
+            continue
+        domain, _include_subdomains, path, secure, _expires, name, value = parts
+        session.cookies.set(name, value, domain=domain.lstrip("."), path=path or "/", secure=secure.upper() == "TRUE")
+        loaded += 1
+    return loaded
 
 
 def normalize_doi(value: str) -> str:
@@ -195,6 +220,85 @@ def publisher_pdf_candidates(row: Dict[str, str]) -> List[Dict[str, str]]:
         add(f"https://onlinelibrary.wiley.com/doi/pdf/{doi}", "wiley_pdf", 95)
     if doi.startswith("10.1080/") or doi.startswith("10.1081/"):
         add(f"https://www.tandfonline.com/doi/pdf/{doi}", "tandf_pdf", 95)
+
+    return candidates
+
+
+def add_live_candidate(candidates: List[Dict[str, str]], url: str, source_type: str, priority: int, note: str = "") -> None:
+    if not url:
+        return
+    if not str(url).lower().startswith(("http://", "https://")):
+        return
+    candidates.append(
+        {
+            "candidate_url": str(url),
+            "candidate_source_type": source_type,
+            "candidate_priority": str(priority),
+            "source_note": note,
+        }
+    )
+
+
+def live_metadata_pdf_candidates(row: Dict[str, str], session: requests.Session, timeout: int) -> List[Dict[str, str]]:
+    doi = normalize_doi(row.get("doi", ""))
+    if not doi:
+        return []
+
+    candidates: List[Dict[str, str]] = []
+    openalex_url = "https://api.openalex.org/works/doi:" + quote("https://doi.org/" + doi, safe=":/")
+    try:
+        response = session.get(openalex_url, timeout=timeout)
+        if response.ok:
+            work = response.json()
+            open_access = work.get("open_access") or {}
+            add_live_candidate(
+                candidates,
+                open_access.get("oa_url", ""),
+                "openalex_oa_url",
+                90,
+                "OpenAlex open_access.oa_url",
+            )
+            primary = work.get("primary_location") or {}
+            add_live_candidate(
+                candidates,
+                primary.get("pdf_url", ""),
+                "openalex_primary_pdf",
+                108,
+                "OpenAlex primary_location.pdf_url",
+            )
+            for location in work.get("locations") or []:
+                source = location.get("source") or {}
+                source_name = str(source.get("display_name", "unknown_source")).replace("\t", " ")
+                priority = 112 if str(source.get("type", "")).lower() == "repository" else 106
+                add_live_candidate(
+                    candidates,
+                    location.get("pdf_url", ""),
+                    "openalex_repository_pdf" if priority == 112 else "openalex_location_pdf",
+                    priority,
+                    f"OpenAlex location pdf_url from {source_name}",
+                )
+    except (requests.RequestException, ValueError):
+        pass
+
+    crossref_url = "https://api.crossref.org/works/" + quote(doi, safe="")
+    try:
+        response = session.get(crossref_url, timeout=timeout)
+        if response.ok:
+            message = response.json().get("message", {})
+            for link in message.get("link") or []:
+                url = link.get("URL", "")
+                content_type = str(link.get("content-type", "")).lower()
+                intended = str(link.get("intended-application", ""))
+                if "pdf" in content_type or "pdf" in url.lower():
+                    add_live_candidate(
+                        candidates,
+                        url,
+                        "crossref_pdf_link",
+                        104,
+                        f"Crossref link content-type={content_type}; intended={intended}",
+                    )
+    except (requests.RequestException, ValueError):
+        pass
 
     return candidates
 
@@ -298,6 +402,13 @@ def target_pdf_path(row: Dict[str, str], pdf_dir: Path) -> Path:
     return pdf_dir / f"{doi_name}.pdf"
 
 
+def relative_to_root(path: Path) -> str:
+    try:
+        return str(path.relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
 def download_candidate(
     row: Dict[str, str],
     candidate: Dict[str, str],
@@ -314,7 +425,7 @@ def download_candidate(
         log.update(
             {
                 "download_status": "skipped_existing",
-                "saved_pdf_path": str(target.relative_to(ROOT)),
+                "saved_pdf_path": relative_to_root(target),
                 "pdf_validated": "yes",
                 "access_note": "Existing local PDF retained; use --overwrite to replace.",
             }
@@ -374,7 +485,7 @@ def download_candidate(
     log.update(
         {
             "download_status": "downloaded_pdf",
-            "saved_pdf_path": str(target.relative_to(ROOT)),
+            "saved_pdf_path": relative_to_root(target),
             "pdf_validated": "yes",
             "access_note": "Saved only after PDF signature/content validation.",
         }
@@ -388,14 +499,14 @@ def should_stop_after_success(log: Dict[str, str]) -> bool:
 
 def main() -> int:
     args = parse_args()
-    input_rows = read_rows(Path(args.input))
-    scored_rows = read_rows(Path(args.scored))
-    source_rows = read_rows(Path(args.source_candidates))
+    input_rows = read_rows(resolve_repo_path(args.input))
+    scored_rows = read_rows(resolve_repo_path(args.scored))
+    source_rows = read_rows(resolve_repo_path(args.source_candidates))
     rows = enrich_input_rows(input_rows, scored_rows)
     if args.limit > 0:
         rows = rows[: args.limit]
 
-    pdf_dir = Path(args.pdf_dir)
+    pdf_dir = resolve_repo_path(args.pdf_dir)
     max_bytes = int(args.max_mb * 1024 * 1024)
     session = requests.Session()
     session.headers.update(
@@ -404,11 +515,18 @@ def main() -> int:
             "Accept-Language": "en-US,en;q=0.9",
         }
     )
+    if args.cookie_header:
+        session.headers.update({"Cookie": args.cookie_header})
+    loaded_cookies = 0
+    if args.cookies:
+        loaded_cookies = load_netscape_cookies(session, resolve_repo_path(args.cookies))
 
     log_rows: List[Dict[str, str]] = []
     for row in rows:
         candidates = []
         candidates.extend(source_table_pdf_candidates(row, source_rows))
+        if not args.no_live_metadata:
+            candidates.extend(live_metadata_pdf_candidates(row, session, args.timeout))
         candidates.extend(publisher_pdf_candidates(row))
         candidates.extend(resolve_elsevier_pdf_candidate(row, session, args.timeout))
         candidates = dedupe_candidates(candidates, args.max_candidates_per_paper)
@@ -441,7 +559,7 @@ def main() -> int:
                 break
             time.sleep(args.sleep)
 
-    write_rows(Path(args.output_log), log_rows)
+    write_rows(resolve_repo_path(args.output_log), log_rows)
 
     if args.ingest_after_download:
         subprocess.run(
@@ -449,7 +567,7 @@ def main() -> int:
                 sys.executable,
                 "src/ingest_local_pdfs.py",
                 "--pdf-dir",
-                str(pdf_dir.relative_to(ROOT) if pdf_dir.is_absolute() else pdf_dir),
+                relative_to_root(pdf_dir),
             ],
             cwd=ROOT,
             check=True,
@@ -460,6 +578,8 @@ def main() -> int:
         status = row.get("download_status", "") or "unknown"
         status_counts[status] = status_counts.get(status, 0) + 1
     print(f"PDF download log written: {Path(args.output_log)}")
+    if args.cookies:
+        print(f"Browser cookies loaded: {loaded_cookies}")
     print(f"Papers considered: {len(rows)}")
     print(f"Attempts logged: {len(log_rows)}")
     for status in sorted(status_counts):

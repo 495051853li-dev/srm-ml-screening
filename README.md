@@ -74,6 +74,19 @@ Current execution plan and status:
   - [data/processed/fulltext_fetch_manifest.csv](D:/ML/srm/srm_ml_screening/data/processed/fulltext_fetch_manifest.csv)
   - [outputs/fulltext/](D:/ML/srm/srm_ml_screening/outputs/fulltext)
 
+`stage4.5_fulltext_acquisition_enhancement`
+
+- input: `eligible_high_if_pool.csv` + `candidate_papers_high_if_scored.csv` + current manifest
+- outputs:
+  - [data/processed/fulltext_source_candidates.csv](D:/ML/srm/srm_ml_screening/data/processed/fulltext_source_candidates.csv)
+  - [data/processed/fulltext_candidate_fetch_log.csv](D:/ML/srm/srm_ml_screening/data/processed/fulltext_candidate_fetch_log.csv)
+  - [data/processed/manual_pdf_request_list.csv](D:/ML/srm/srm_ml_screening/data/processed/manual_pdf_request_list.csv)
+- policy:
+  - Open-access fulltext is allowed.
+  - Publisher PDF/HTML fulltext directly available through the current legal institutional IP is allowed.
+  - Paywall, login, captcha, Cloudflare, and other access-control bypass is not allowed.
+  - Sci-Hub or unauthorized PDF mirrors are not allowed.
+
 `stage5_extract_fields`
 
 - input: `candidate_papers_high_if_scored.csv` + `fulltext_fetch_manifest.csv`
@@ -115,6 +128,20 @@ python src/run_batch_literature_pipeline.py --stages stage3_score_and_filter
 python src/run_batch_literature_pipeline.py --stages stage4_fetch_sources stage5_extract_fields
 python src/run_batch_literature_pipeline.py --stages stage6_qc_and_freeze stage7_analysis_ready_exports
 ```
+
+Run the authorized fulltext acquisition enhancement on a small batch:
+
+```powershell
+python src/discover_fulltext_sources.py --limit 20
+python src/fetch_fulltext_authorized.py --limit 20 --skip-existing --sleep 1.0 --timeout 30 --max-per-domain 5
+python src/check_stage5_ready_pool.py
+python src/classify_source_quality.py
+```
+
+Detailed fulltext policy and behavior:
+
+- [docs/fulltext_acquisition_strategy.md](D:/ML/srm/srm_ml_screening/docs/fulltext_acquisition_strategy.md)
+- [docs/legal_fulltext_access_policy.md](D:/ML/srm/srm_ml_screening/docs/legal_fulltext_access_policy.md)
 
 ## Manual Extraction Layer
 

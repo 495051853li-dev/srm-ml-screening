@@ -28,7 +28,16 @@ def main() -> int:
     scored = pd.read_csv(ROOT / args.scored)
     manifest = pd.read_csv(ROOT / args.manifest) if (ROOT / args.manifest).exists() else pd.DataFrame()
 
-    quality = manifest[["paper_id", "source_quality_type", "ready_for_extraction"]].copy() if not manifest.empty else pd.DataFrame(columns=["paper_id", "source_quality_type", "ready_for_extraction"])
+    manifest_columns = [
+        "paper_id",
+        "source_quality_type",
+        "ready_for_extraction",
+        "fetch_status",
+        "failure_reason",
+        "recommended_next_action",
+        "access_route",
+    ]
+    quality = manifest[[column for column in manifest_columns if column in manifest.columns]].copy() if not manifest.empty else pd.DataFrame(columns=manifest_columns)
     merged = scored.merge(quality, on="paper_id", how="left")
     source_type = merged["source_quality_type"].fillna("")
     no_fulltext = ~source_type.isin(["pdf_fulltext", "html_fulltext"])
@@ -47,8 +56,17 @@ def main() -> int:
         na_position="last",
     )
 
-    out["reason_needed"] = out["source_quality_type"].fillna("").replace("", "no_fulltext_source_available")
-    out["reason_needed"] = "IF>=6 journal article; Ni-based; SRM-relevant; no pdf_fulltext/html_fulltext in manifest"
+    out["failure_reason"] = out["failure_reason"].fillna("").astype(str)
+    out.loc[out["failure_reason"].str.strip().eq(""), "failure_reason"] = out["fetch_status"].fillna("").astype(str)
+    out.loc[out["failure_reason"].str.strip().eq(""), "failure_reason"] = "no_pdf_or_html_fulltext_available"
+    out["suggested_legal_access_route"] = out.apply(
+        lambda row: (
+            "Use institutional IP/VPN/library link resolver, publisher page, or DOI landing page; if PDF is obtained legally, save it to data/raw/pdfs/ using paper_id.pdf."
+            if str(row.get("source_quality_type", "")).strip() not in {"pdf_fulltext", "html_fulltext"}
+            else "Already has fulltext; no manual PDF request needed."
+        ),
+        axis=1,
+    )
     out["suggested_search_query"] = out.apply(
         lambda row: f'"{row.get("title", "")}" "{row.get("doi", "")}" PDF',
         axis=1,
@@ -62,7 +80,8 @@ def main() -> int:
         "doi",
         "journal_impact_factor",
         "priority_score",
-        "reason_needed",
+        "failure_reason",
+        "suggested_legal_access_route",
         "suggested_search_query",
         "manual_status",
     ]

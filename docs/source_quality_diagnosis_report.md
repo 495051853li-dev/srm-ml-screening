@@ -2,21 +2,19 @@
 
 ## 当前来源质量分层
 
-- 分层记录数：`15`
-- `redirect_or_forbidden`: `13`
-- `abstract_only`: `1`
-- `pdf_fulltext`: `1`
+- 分层记录数：`26`
+- `pdf_fulltext`: `20`
+- `redirect_or_forbidden`: `6`
 
 ## ready_for_extraction 记录的来源类型
 
-- ready_for_extraction=yes 记录数：`2`
-- `abstract_only`: `1`
-- `pdf_fulltext`: `1`
+- ready_for_extraction=yes 记录数：`20`
+- `pdf_fulltext`: `20`
 
 ## 真正可用于 experimental extraction 的记录数量
 
-- 允许 metadata + experimental 抽取的记录数：`1`
-- 当前 experimental 草稿记录数：`0`
+- 允许 metadata + experimental 抽取的记录数：`20`
+- 当前 experimental 草稿记录数：`20`
 
 ## fulltext candidate fetch 诊断
 
@@ -40,50 +38,31 @@ candidate_url 获取后的来源质量：
 - 不同温度、S/C、压力、GHSV 下的 SRM 性能不可直接比较；实验字段必须有原文数值、单位和上下文证据才允许进入草稿。
 
 当前关键 experimental 字段覆盖率：
-- `temperature_c`: `0.0%`
-- `pressure_bar`: `0.0%`
-- `steam_to_carbon_ratio`: `0.0%`
-- `gas_hourly_space_velocity_h_inv`: `0.0%`
-- `methane_conversion_pct`: `0.0%`
+- `temperature_c`: `10.0%`
+- `pressure_bar`: `80.0%`
+- `steam_to_carbon_ratio`: `40.0%`
+- `gas_hourly_space_velocity_h_inv`: `25.0%`
+- `methane_conversion_pct`: `25.0%`
 - `h2_yield_pct`: `0.0%`
-- `stability_duration_h`: `0.0%`
+- `stability_duration_h`: `75.0%`
 - `coke_amount_wt_pct`: `0.0%`
 
 ## 需要继续寻找 PDF / HTML fulltext 的来源
 
-- `paper_id=paper_0101`; `source_quality_type=redirect_or_forbidden`; `journal=Applied Catalysis B: Environmental`; `journal_impact_factor=21.1`; `priority_score=88.5`; `recommended_next_action=find_pdf_or_open_access_fulltext`
 - `paper_id=paper_0124`; `source_quality_type=redirect_or_forbidden`; `journal=Chemical Engineering Journal`; `journal_impact_factor=13.2`; `priority_score=85.5`; `recommended_next_action=find_pdf_or_open_access_fulltext`
-- `paper_id=paper_0194`; `source_quality_type=abstract_only`; `journal=Journal of Materials Chemistry A`; `journal_impact_factor=9.5`; `priority_score=91.0`; `recommended_next_action=extract_metadata_then_find_fulltext_for_experimental_fields`
-- `paper_id=paper_0159`; `source_quality_type=redirect_or_forbidden`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=88.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
-- `paper_id=paper_0166`; `source_quality_type=redirect_or_forbidden`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=88.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
 - `paper_id=paper_0191`; `source_quality_type=redirect_or_forbidden`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=85.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
-- `paper_id=paper_0150`; `source_quality_type=redirect_or_forbidden`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=84.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
-- `paper_id=paper_0180`; `source_quality_type=redirect_or_forbidden`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=84.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
 - `paper_id=paper_0099`; `source_quality_type=redirect_or_forbidden`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=78.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
 - `paper_id=paper_0193`; `source_quality_type=redirect_or_forbidden`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=78.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
-- `paper_id=paper_0221`; `source_quality_type=redirect_or_forbidden`; `journal=Fuel Processing Technology`; `journal_impact_factor=7.7`; `priority_score=91.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
-- `paper_id=paper_0157`; `source_quality_type=redirect_or_forbidden`; `journal=Fuel`; `journal_impact_factor=7.5`; `priority_score=81.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
 - `paper_id=paper_0007`; `source_quality_type=redirect_or_forbidden`; `journal=Journal of Catalysis`; `journal_impact_factor=6.5`; `priority_score=78.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
 - `paper_id=paper_0202`; `source_quality_type=redirect_or_forbidden`; `journal=Journal of the Energy Institute`; `journal_impact_factor=6.2`; `priority_score=78.0`; `recommended_next_action=find_pdf_or_open_access_fulltext`
 
 ## 人工 PDF 优先清单
 
-- 待人工合法下载 PDF 的优先记录数：`23`
-- `paper_id=paper_0158`; `journal=ACS Catalysis`; `journal_impact_factor=13.1`; `priority_score=98.5`; `doi=10.1021/acscatal.6b01133`
-- `paper_id=paper_0153`; `journal=ACS Catalysis`; `journal_impact_factor=13.1`; `priority_score=91.5`; `doi=10.1021/acscatal.5b01221`
-- `paper_id=paper_0194`; `journal=Journal of Materials Chemistry A`; `journal_impact_factor=9.5`; `priority_score=91.0`; `doi=10.1039/d0ta11359j`
-- `paper_id=paper_0221`; `journal=Fuel Processing Technology`; `journal_impact_factor=7.7`; `priority_score=91.0`; `doi=10.1016/j.fuproc.2025.108325`
-- `paper_id=paper_0101`; `journal=Applied Catalysis B: Environmental`; `journal_impact_factor=21.1`; `priority_score=88.5`; `doi=10.1016/j.apcatb.2010.10.026`
-- `paper_id=paper_0056`; `journal=Chemical Engineering Journal`; `journal_impact_factor=13.2`; `priority_score=88.5`; `doi=10.1016/j.cej.2005.06.004`
-- `paper_id=paper_0037`; `journal=Chemical Engineering Journal`; `journal_impact_factor=13.2`; `priority_score=88.5`; `doi=10.1016/s1385-8947(00)00367-3`
-- `paper_id=paper_0166`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=88.0`; `doi=10.1016/j.ijhydene.2017.06.096`
-- `paper_id=paper_0159`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=88.0`; `doi=10.1016/j.ijhydene.2016.05.109`
-- `paper_id=paper_0103`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=85.0`; `doi=10.1016/j.ijhydene.2010.06.049`
-- `paper_id=paper_0180`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=84.0`; `doi=10.1016/j.ijhydene.2019.04.287`
-- `paper_id=paper_0150`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=84.0`; `doi=10.1016/j.ijhydene.2015.06.104`
-- `paper_id=paper_0161`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=82.0`; `doi=10.1016/j.ijhydene.2016.07.245`
-- `paper_id=paper_0208`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=81.0`; `doi=10.1016/j.ijhydene.2023.09.167`
-- `paper_id=paper_0031`; `journal=International Journal of Hydrogen Energy`; `journal_impact_factor=8.3`; `priority_score=81.0`; `doi=10.1016/s0360-3199(99)00011-7`
+- 待人工合法下载 PDF 的优先记录数：`4`
+- `paper_id=paper_0006`; `journal=Journal of Catalysis`; `journal_impact_factor=6.5`; `priority_score=81.0`; `doi=10.1016/0021-9517(84)90107-6`
+- `paper_id=paper_0004`; `journal=Journal of Catalysis`; `journal_impact_factor=6.5`; `priority_score=81.0`; `doi=10.1016/0021-9517(81)90010-5`
+- `paper_id=paper_0003`; `journal=Journal of Catalysis`; `journal_impact_factor=6.5`; `priority_score=81.0`; `doi=10.1016/0021-9517(78)90142-2`
+- `paper_id=paper_0005`; `journal=Journal of Catalysis`; `journal_impact_factor=6.5`; `priority_score=78.0`; `doi=10.1016/0021-9517(81)90332-8`
 
 ## 是否建议优先做 PDF 获取增强
 

@@ -53,7 +53,7 @@ STAGE_COMMANDS: Dict[str, List[List[str]]] = {
         ],
         [
             sys.executable,
-            "src/fetch_fulltext_candidates.py",
+            "src/fetch_fulltext_authorized.py",
             "--candidates",
             "data/processed/fulltext_source_candidates.csv",
             "--manifest",
@@ -63,6 +63,10 @@ STAGE_COMMANDS: Dict[str, List[List[str]]] = {
             "--limit",
             "20",
             "--skip-existing",
+            "--sleep",
+            "1.0",
+            "--max-per-domain",
+            "5",
         ],
         [
             sys.executable,

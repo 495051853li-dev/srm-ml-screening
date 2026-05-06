@@ -9,6 +9,8 @@
 - 如果返回登录页、摘要页、HTML、403、跳转页或机构认证页，脚本只记录失败原因，不保存为 PDF。
 - 只有通过 PDF 文件头或 PDF content-type 校验的响应才会保存。
 
+脚本会优先使用当前表格，同时实时查询当前 DOI 的 OpenAlex / Crossref 元数据，补充 repository PDF、publisher PDF、Crossref PDF link 等候选来源。这个步骤不扩大候选池，只为表格中已有文献补充下载入口。
+
 ## 推荐命令
 
 先小批量测试：
@@ -66,3 +68,17 @@ python src/ingest_local_pdfs.py
 ```bash
 python src/ingest_local_pdfs.py
 ```
+
+如果你已经在浏览器中完成机构登录，也可以导出 Netscape `cookies.txt` 后运行：
+
+```bash
+python src/download_pdfs_from_table.py --cookies cookies.txt --limit 30 --ingest-after-download
+```
+
+或临时粘贴 Cookie header：
+
+```bash
+python src/download_pdfs_from_table.py --cookie-header "name=value; another=value" --limit 30 --ingest-after-download
+```
+
+Cookie 只用于你已有合法访问权限的正常下载，不用于绕过访问控制。

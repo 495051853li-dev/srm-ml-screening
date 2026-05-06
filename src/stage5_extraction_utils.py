@@ -125,7 +125,7 @@ def load_text_from_local_path(path: Path) -> str:
         try:
             reader = PdfReader(str(path))
             pages = []
-            for page in reader.pages[:12]:
+            for page in reader.pages:
                 pages.append(page.extract_text() or "")
             return normalize_text(" ".join(pages))
         except Exception:
@@ -222,11 +222,13 @@ def classify_source_quality(fetch_row: Dict[str, str], quality: Dict[str, object
     extraction_strategy = "skip"
     recommended_next_action = "manual_check_source"
 
-    if status in {"forbidden", "redirect_only"} or (text_length < 30 and redirect_hits):
+    is_pdf_like_source = local_suffix == ".pdf" or "pdf" in content_type or "local_pdf" in url_source
+
+    if status in {"forbidden", "redirect_only", "paywall_or_login_required", "captcha_or_bot_blocked"} or (text_length < 30 and redirect_hits):
         source_quality_type = "redirect_or_forbidden"
         source_quality_score = 0
         recommended_next_action = "find_pdf_or_open_access_fulltext"
-    elif status in {"no_useful_content", "non_retryable_failure", "retryable_failure", "timeout", "parse_failed"}:
+    elif status in {"no_useful_content", "non_retryable_failure", "retryable_failure", "timeout", "parse_failed", "manual_required"}:
         source_quality_type = "no_useful_content"
         source_quality_score = 0
         recommended_next_action = "retry_if_retryable_or_find_alternate_source"
@@ -234,7 +236,7 @@ def classify_source_quality(fetch_row: Dict[str, str], quality: Dict[str, object
         source_quality_type = "no_useful_content"
         source_quality_score = 0
         recommended_next_action = "find_pdf_or_html_fulltext"
-    elif local_suffix == ".pdf" or "pdf" in content_type:
+    elif is_pdf_like_source:
         if text_length >= 3000 and has_msr_terms:
             source_quality_type = "pdf_fulltext"
             source_quality_score = 95
